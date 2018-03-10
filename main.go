@@ -129,11 +129,19 @@ func buildChannels(usedTracks []m3u.Track) []LineupItem {
 
 	for _, track := range usedTracks {
 
-		var finalName string
+		var channName string
 		if track.TvgName == "" {
-			finalName = track.Name
+			channName = track.Name
 		} else {
-			finalName = track.TvgName
+			channName = track.TvgName
+		}
+
+		var channNum string
+		if track.TvgID == "" {
+			channNum = strconv.Itoa(gn)
+			gn += 1
+		} else {
+			channNum = track.TvgID
 		}
 
 		// base64 url
@@ -148,14 +156,12 @@ func buildChannels(usedTracks []m3u.Track) []LineupItem {
 		}
 
 		lu := LineupItem{
-			GuideNumber: strconv.Itoa(gn),
-			GuideName:   finalName,
-			URL:         fullTrackUri,
+			GuideNumber: channNum,
+			GuideName:   channName,
+			URL:         fullTrackUri
 		}
 
 		lineup = append(lineup, lu)
-
-		gn = gn + 1
 	}
 
 	return lineup
