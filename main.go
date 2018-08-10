@@ -3,12 +3,11 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/koron/go-ssdp"
-	"github.com/namsral/flag"
-	"github.com/tombowditch/telly-m3u-parser"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,10 +15,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/AlekSi/xmltv"
-	"encoding/xml"
-	"io/ioutil"
 
+	"github.com/AlekSi/xmltv"
+	ssdp "github.com/koron/go-ssdp"
+	"github.com/namsral/flag"
+	m3u "github.com/tombowditch/telly-m3u-parser"
 )
 
 var deviceXml string
@@ -87,8 +87,6 @@ func init() {
 	flag.Parse()
 }
 
-
-
 func log(level string, msg string) {
 	fmt.Println("[telly] [" + level + "] " + msg)
 }
@@ -111,7 +109,7 @@ func logRequestHandler(next http.Handler) http.Handler {
 
 /*
 	Returns a map with "Channel Name" => "Channel Id" mapping
- */
+*/
 func getChannelMappings(reader io.Reader) (map[string]string, error) {
 	decoder := xml.NewDecoder(reader)
 
@@ -160,7 +158,7 @@ func buildChannels(xmltv string, usedTracks []m3u.Track) []LineupItem {
 
 	chanMap, err := getChannelMappings(strings.NewReader(xmltv))
 	if err != nil {
-		log("info", "Disabling XMLTV channel matching because of: " + err.Error())
+		log("info", "Disabling XMLTV channel matching because of: "+err.Error())
 		gn = 10000
 	}
 
@@ -178,12 +176,12 @@ func buildChannels(xmltv string, usedTracks []m3u.Track) []LineupItem {
 			for _, chanMapName := range chanMap {
 				if strings.Contains(strings.ToLower(chanMapName), strings.ToLower(channName)) {
 					channNum = chanMap[chanMapName]
-					break;
+					break
 				}
 			}
 
 			if channNum == "" {
-				log("info", "No XMLTV entry found for channel: " + channName + ", defaulting to index")
+				log("info", "No XMLTV entry found for channel: "+channName+", defaulting to index")
 				channNum = strconv.Itoa(gn)
 				gn += 1
 			}
@@ -206,7 +204,7 @@ func buildChannels(xmltv string, usedTracks []m3u.Track) []LineupItem {
 		lu := LineupItem{
 			GuideNumber: channNum,
 			GuideName:   channName,
-			URL:         fullTrackUri
+			URL:         fullTrackUri,
 		}
 
 		lineup = append(lineup, lu)
@@ -283,7 +281,7 @@ func main() {
 		}
 	}
 
-	log("info", "Reading m3u file " + *m3uPath+"...")
+	log("info", "Reading m3u file "+*m3uPath+"...")
 	playlist, err := m3u.Parse(*m3uPath)
 	if err != nil {
 		log("error", "unable to read m3u file, error below")
@@ -427,7 +425,7 @@ func main() {
 		log("info", "Trying to load xmltv")
 		xmlEpgBytes, err := ioutil.ReadFile(*xmlTvFile)
 		if err != nil {
-			log("error", "Skipping XMLTV: " + err.Error())
+			log("error", "Skipping XMLTV: "+err.Error())
 		}
 		xmlEpg = string(xmlEpgBytes)
 	}
